@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Charge Nurse Shift Report</title>
+  <style>
+    /* ====== Theme ====== */
+    :root{
+      --bg:#f6f9fc;
+      --card:#ffffff;
+      --text:#1f2937;
+      --muted:#6b7280;
+      --brand:#2563eb;       /* blue */
+      --brand-2:#10b981;     /* green */
+      --brand-3:#8b5cf6;     /* violet */
+      --accent:#f59e0b;      /* amber */
+      --danger:#ef4444;      /* red */
+      --success:#16a34a;     /* green darker */
+      --shadow:0 6px 24px rgba(17,24,39,.08),0 2px 8px rgba(17,24,39,.06);
+      --radius:18px;
+      --radius-sm:12px;
+    }
+
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0; font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial, "Noto Sans", "Apple Color Emoji", "Segoe UI Emoji";
+      background:var(--bg); color:var(--text);
+      line-height:1.4;
+    }
+
+    .container{max-width:1100px; margin:28px auto 64px; padding:0 18px}
+
+    /* ====== Header ====== */
+    .title{
+      text-align:center; font-size:clamp(28px, 4vw, 40px); font-weight:800; letter-spacing:.3px;
+    }
+    .title .underline{ display:inline-block; border-bottom:6px solid var(--brand); padding-bottom:6px; border-radius:2px }
+    .subhead{ text-align:center; color:var(--muted); margin-top:6px }
+
+    /* ====== Toolbar ====== */
+    .toolbar{ display:flex; gap:12px; flex-wrap:wrap; justify-content:center; margin:22px 0 8px }
+    .btn{
+      --btn-bg: var(--brand);
+      --btn-bd: transparent;
+      --btn-color: #fff;
+      display:inline-flex; align-items:center; gap:10px; padding:12px 18px;
+      border-radius:14px; border:2px solid var(--btn-bd); background:var(--btn-bg); color:var(--btn-color);
+      font-weight:700; cursor:pointer; box-shadow:var(--shadow); transition:transform .08s ease, filter .2s ease;
+      user-select:none; text-decoration:none;
+    }
+    .btn svg{ width:18px; height:18px }
+    .btn:hover{ filter:brightness(1.03) }
+    .btn:active{ transform:translateY(1px) }
+    .btn.secondary{ --btn-bg:#fff; --btn-bd: var(--brand); --btn-color: var(--brand) }
+    .btn.success{ --btn-bg: var(--brand-2) }
+    .btn.warning{ --btn-bg: var(--accent); }
+
+    /* ====== Cards / Sections ====== */
+    .card{ background:var(--card); border-radius:var(--radius); box-shadow:var(--shadow); overflow:hidden; margin-top:18px }
+    .card .head{ display:flex; align-items:center; gap:10px; padding:16px 18px; font-weight:800 }
+    .head.badge-green{ background:linear-gradient(90deg, rgba(16,185,129,.12), rgba(16,185,129,.05)); color:#064e3b }
+    .head.badge-purple{ background:linear-gradient(90deg, rgba(139,92,246,.12), rgba(139,92,246,.06)); color:#3b0764 }
+
+    .row{ display:grid; grid-template-columns: repeat(12, 1fr); gap:14px; padding:16px 18px 22px }
+    .col-12{ grid-column:span 12 }
+    .col-6{ grid-column:span 6 }
+    .col-4{ grid-column:span 4 }
+    .col-3{ grid-column:span 3 }
+    .col-2{ grid-column:span 2 }
+
+    @media (max-width: 900px){
+      .col-6,.col-4,.col-3,.col-2{ grid-column:span 12 }
+    }
+
+    label{ display:block; font-size:.9rem; font-weight:700; margin:6px 0 8px }
+    .control{ display:flex; gap:10px; align-items:stretch }
+    input[type="text"], input[type="number"], input[type="search"], select, textarea{
+      width:100%; padding:14px 14px; border-radius:12px; border:2px solid #e5e7eb; outline:0;
+      transition:border-color .18s ease, box-shadow .18s ease; background:#fff; font-size:1rem;
+    }
+    input:focus, select:focus, textarea:focus{ border-color:var(--brand); box-shadow:0 0 0 4px rgba(37,99,235,.12) }
+    input[aria-invalid="true"]{ border-color:var(--danger); box-shadow:0 0 0 4px rgba(239,68,68,.12) }
+
+    .hint{ font-size:.85rem; color:var(--muted); margin-top:6px }
+
+    /* badges */
+    .badge{ display:inline-flex; align-items:center; gap:8px; padding:6px 10px; background:#eef2ff; color:#3730a3; border-radius:999px; font-weight:700; font-size:.85rem }
+
+    /* Totals Bar */
+    .totals{
+      display:flex; flex-wrap:wrap; gap:14px; padding:16px 18px; border-top:1px dashed #e5e7eb; background:linear-gradient(0deg, rgba(37,99,235,.04), transparent);
+    }
+    .pill{ background:#111827; color:#fff; border-radius:999px; padding:10px 14px; font-weight:800 }
+
+    /* Toast */
+    .toast{ position:fixed; right:22px; bottom:22px; background:#111827; color:#fff; padding:12px 16px; border-radius:12px; box-shadow:var(--shadow); opacity:0; transform:translateY(10px); pointer-events:none; transition:all .25s ease }
+    .toast.show{ opacity:1; transform:translateY(0) }
+
+    /* Modal */
+    .modal{ position:fixed; inset:0; background:rgba(17,24,39,.45); display:none; align-items:center; justify-content:center; padding:18px }
+    .modal.show{ display:flex }
+    .modal .dialog{ background:#fff; width:min(820px, 92vw); border-radius:18px; box-shadow:var(--shadow); overflow:hidden }
+    .dialog .dialog-head{ display:flex; justify-content:space-between; align-items:center; padding:14px 18px; background:#f9fafb; border-bottom:1px solid #e5e7eb }
+    .dialog .dialog-body{ padding:18px }
+    .dialog .dialog-actions{ display:flex; justify-content:flex-end; gap:10px; padding:14px 18px; background:#fafafa }
+
+    /* small utilities */
+    .icon{ width:18px; height:18px; vertical-align:-3px }
+    .mt-6{ margin-top:6px }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1 class="title"><span class="underline">Charge Nurse Shift Report</span></h1>
+    <p class="subhead">Smart, printable, and colorful single‑file form for quick ICU reporting</p>
+
+    <div class="toolbar" role="group" aria-label="Main actions">
+      <button id="btnSave" class="btn success" title="Save this report to a file (JSON)" type="button">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+        Save Report
+      </button>
+      <button id="btnNew" class="btn" title="Start a fresh report" type="button">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        New Report
+      </button>
+      <button id="btnPrint" class="btn secondary" title="Print / export to PDF" type="button">
+        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+        Print / PDF
+      </button>
+    </div>
+
+    <!-- Search by MRN -->
+    <section class="card" id="secSearch">
+      <div class="head badge-green">
+        <span class="badge">🔎 Search by MRN</span>
+      </div>
+      <div class="row">
+        <div class="col-12">
+          <label for="mrn">Enter MRN to search</label>
+          <div class="control">
+            <input id="mrn" type="search" inputmode="numeric" placeholder="Enter MRN number" aria-describedby="mrnHint"/>
+            <button id="btnSearch" class="btn" type="button" title="Search MRN">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+              Search
+            </button>
+            <button id="btnClearMrn" class="btn warning" type="button" title="Clear MRN field">Clear</button>
+          </div>
+          <div id="mrnHint" class="hint">Tip: Paste an MRN and press <strong>Enter</strong> to search. (Demo uses a mock lookup.)</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Nursing Manpower -->
+    <section class="card">
+      <div class="head badge-green">Nursing Manpower</div>
+      <div class="row">
+        <div class="col-2"> <label for="nm_staff">No. Staff</label> <input id="nm_staff" type="number" min="0" placeholder="Enter number"/> </div>
+        <div class="col-2"> <label for="nm_orientee">Orientee</label> <input id="nm_orientee" type="number" min="0" placeholder="Enter number"/> </div>
+        <div class="col-2"> <label for="nm_pull">Pull out staff</label> <input id="nm_pull" type="number" min="0" placeholder="Enter number"/> </div>
+        <div class="col-3"> <label for="nm_rcicu">RC ICU Staff</label> <input id="nm_rcicu" type="number" min="0" placeholder="Enter number"/> </div>
+        <div class="col-2"> <label for="nm_float">Float to ICU staff</label> <input id="nm_float" type="number" min="0" placeholder="Enter number"/> </div>
+        <div class="col-2"> <label for="nm_oncall">On Call</label> <input id="nm_oncall" type="number" min="0" placeholder="Enter number"/> </div>
+      </div>
+      <div class="totals">
+        <span class="pill" id="nm_total">Total manpower: 0</span>
+      </div>
+    </section>
+
+    <!-- Census -->
+    <section class="card">
+      <div class="head badge-purple">Census</div>
+      <div class="row">
+        <div class="col-3"><label for="c_active">No. Active Cases</label><input id="c_active" type="number" min="0" placeholder="Enter number"></div>
+        <div class="col-3"><label for="c_adm">Admission</label><input id="c_adm" type="number" min="0" placeholder="Enter number"></div>
+        <div class="col-3"><label for="c_dis">Discharge</label><input id="c_dis" type="number" min="0" placeholder="Enter number"></div>
+        <div class="col-3"><label for="c_tran">Transfer out</label><input id="c_tran" type="number" min="0" placeholder="Enter number"></div>
+        <div class="col-3"><label for="c_dama">DAMA</label><input id="c_dama" type="number" min="0" placeholder="Enter number"></div>
+        <div class="col-3"><label for="c_death">Death</label><input id="c_death" type="number" min="0" placeholder="Enter number"></div>
+        <div class="col-3"><label for="c_code">Code Blue</label><input id="c_code" type="number" min="0" placeholder="Enter number"></div>
+        <div class="col-3"><label for="c_crrt">No. of cases on CRRT</label><input id="c_crrt" type="number" min="0" placeholder="Enter number"></div>
+        <div class="col-3"><label for="c_hd">No. of cases on Hemodialysis</label><input id="c_hd" type="number" min="0" placeholder="Enter number"></div>
+        <div class="col-12"><label for="notes">Notes</label><textarea id="notes" rows="3" placeholder="Add short shift notes…"></textarea></div>
+      </div>
+      <div class="totals">
+        <span class="pill" id="census_total">Census total: 0</span>
+        <span class="pill" id="events_total">Today events: 0</span>
+      </div>
+    </section>
+
+    <!-- Toast -->
+    <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+    <!-- Modal: Save preview -->
+    <div class="modal" id="saveModal" aria-hidden="true" aria-labelledby="svh">
+      <div class="dialog">
+        <div class="dialog-head">
+          <strong id="svh">Report preview</strong>
+          <button class="btn secondary" id="closeModal" type="button">Close</button>
+        </div>
+        <div class="dialog-body">
+          <div id="preview"></div>
+        </div>
+        <div class="dialog-actions">
+          <button class="btn success" id="downloadJson" type="button">Download JSON</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ===== Helpers =====
+    const $ = (sel, root=document) => root.querySelector(sel);
+    const $$ = (sel, root=document) => Array.from(root.querySelectorAll(sel));
+    const toast = (msg) => { const t = $('#toast'); t.textContent = msg; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'), 2200) }
+
+    // Coerce numeric input to >=0 and recompute totals
+    const num = v => Number.isFinite(+v) && +v >= 0 ? +v : 0;
+
+    // Persist to localStorage under a stable key
+    const KEY = 'charge-nurse-shift-report';
+
+    const fields = {
+      mrn: '#mrn',
+      nm: ['#nm_staff','#nm_orientee','#nm_pull','#nm_rcicu','#nm_float','#nm_oncall'],
+      census: ['#c_active','#c_adm','#c_dis','#c_tran','#c_dama','#c_death','#c_code','#c_crrt','#c_hd'],
+      notes: '#notes'
+    };
+
+    function computeManpower(){
+      const total = fields.nm.map(sel=>num($(sel).value)).reduce((a,b)=>a+b,0);
+      $('#nm_total').textContent = `Total manpower: ${total}`;
+      return total;
+    }
+
+    function computeCensus(){
+      const vals = fields.census.map(sel=>num($(sel).value));
+      const [active, adm, dis, tran, dama, death, code, crrt, hd] = vals;
+      const events = adm + dis + tran + dama + death + code;
+      $('#census_total').textContent = `Census total: ${active}`;
+      $('#events_total').textContent = `Today events: ${events}`;
+      return {active, events, crrt, hd};
+    }
+
+    function gather(){
+      return {
+        metadata: { title: 'Charge Nurse Shift Report', savedAt: new Date().toISOString() },
+        mrn: $('#mrn').value.trim(),
+        nursingManpower: {
+          noStaff: num($('#nm_staff').value), orientee: num($('#nm_orientee').value), pullOut: num($('#nm_pull').value), rcICU: num($('#nm_rcicu').value), floatToICU: num($('#nm_float').value), onCall: num($('#nm_oncall').value), total: computeManpower()
+        },
+        census: {
+          active: num($('#c_active').value), admission: num($('#c_adm').value), discharge: num($('#c_dis').value), transferOut: num($('#c_tran').value), dama: num($('#c_dama').value), death: num($('#c_death').value), codeBlue: num($('#c_code').value), crrt: num($('#c_crrt').value), hemodialysis: num($('#c_hd').value)
+        },
+        notes: $('#notes').value.trim()
+      }
+    }
+
+    function populate(data){
+      if(!data) return;
+      $('#mrn').value = data.mrn || '';
+      const nm = data.nursingManpower || {};
+      $('#nm_staff').value = nm.noStaff ?? '';
+      $('#nm_orientee').value = nm.orientee ?? '';
+      $('#nm_pull').value = nm.pullOut ?? '';
+      $('#nm_rcicu').value = nm.rcICU ?? '';
+      $('#nm_float').value = nm.floatToICU ?? '';
+      $('#nm_oncall').value = nm.onCall ?? '';
+
+      const c = data.census || {};
+      $('#c_active').value = c.active ?? '';
+      $('#c_adm').value = c.admission ?? '';
+      $('#c_dis').value = c.discharge ?? '';
+      $('#c_tran').value = c.transferOut ?? '';
+      $('#c_dama').value = c.dama ?? '';
+      $('#c_death').value = c.death ?? '';
+      $('#c_code').value = c.codeBlue ?? '';
+      $('#c_crrt').value = c.crrt ?? '';
+      $('#c_hd').value = c.hemodialysis ?? '';
+      $('#notes').value = data.notes || '';
+      computeManpower();
+      computeCensus();
+    }
+
+    // ===== Events =====
+    fields.nm.concat(fields.census).forEach(sel=>{
+      $(sel).addEventListener('input', e=>{
+        // enforce >=0, integer
+        const v = e.target.value.replace(/[^0-9]/g,'');
+        e.target.value = v;
+        computeManpower();
+        computeCensus();
+        saveDraft();
+      })
+    });
+
+    $('#notes').addEventListener('input', saveDraft);
+
+    $('#btnClearMrn').addEventListener('click', ()=>{ $('#mrn').value=''; $('#mrn').focus(); })
+
+    $('#btnSearch').addEventListener('click', doSearch);
+    $('#mrn').addEventListener('keydown', e=>{ if(e.key==='Enter'){ doSearch(); } });
+
+    function doSearch(){
+      const value = $('#mrn').value.trim();
+      const valid = /^\d{6,}$/.test(value);
+      $('#mrn').setAttribute('aria-invalid', String(!valid));
+      if(!valid){ toast('Enter a numeric MRN (≥ 6 digits)'); return; }
+      // Demo mock lookup - returns a synthetic message
+      toast(`MRN ${value} looked up (demo).`);
+    }
+
+    // Save -> open preview modal & allow JSON download
+    $('#btnSave').addEventListener('click', ()=>{
+      const data = gather();
+      const pv = $('#preview');
+      pv.innerHTML = renderPreviewHTML(data);
+      $('#saveModal').classList.add('show');
+      $('#saveModal').setAttribute('aria-hidden','false');
+      localStorage.setItem(KEY, JSON.stringify(data));
+      toast('Draft saved locally. Download if you want a file.');
+    })
+
+    $('#closeModal').addEventListener('click', ()=>{
+      $('#saveModal').classList.remove('show');
+      $('#saveModal').setAttribute('aria-hidden','true');
+    })
+
+    $('#downloadJson').addEventListener('click', ()=>{
+      const data = gather();
+      const blob = new Blob([JSON.stringify(data, null, 2)], {type:'application/json'});
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      const ts = new Date().toISOString().replace(/[:T]/g,'-').slice(0,19);
+      a.href = url; a.download = `charge-nurse-shift-report-${ts}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+      toast('JSON file downloaded.');
+    })
+
+    // New report
+    $('#btnNew').addEventListener('click', ()=>{
+      $$('input[type="number"], textarea').forEach(el=>el.value='');
+      $('#mrn').value='';
+      computeManpower(); computeCensus();
+      saveDraft();
+      toast('New blank report');
+    })
+
+    // Print
+    $('#btnPrint').addEventListener('click', ()=>{ window.print(); })
+
+    // Autosave draft
+    function saveDraft(){
+      const data = gather();
+      localStorage.setItem(KEY, JSON.stringify(data));
+    }
+
+    // Restore draft on load
+    (function init(){
+      try{ const saved = JSON.parse(localStorage.getItem(KEY)||'null'); populate(saved); }catch{ /* ignore */ }
+      computeManpower(); computeCensus();
+    })();
+
+    function renderPreviewHTML(data){
+      const li = (k,v)=>`<tr><td style="padding:6px 8px;font-weight:700">${k}</td><td style="padding:6px 8px">${v}</td></tr>`;
+      return `
+        <div style="display:grid;gap:14px">
+          <div style="display:flex;flex-wrap:wrap;gap:8px">
+            <span class="badge">MRN: ${data.mrn || '—'}</span>
+            <span class="badge">Saved: ${new Date(data.metadata.savedAt).toLocaleString()}</span>
+          </div>
+          <h3 style="margin:0">Nursing Manpower</h3>
+          <table style="border-collapse:collapse;width:100%;background:#fafafa;border:1px solid #e5e7eb;border-radius:10px;overflow:hidden">
+            ${li('No. Staff', data.nursingManpower.noStaff)}
+            ${li('Orientee', data.nursingManpower.orientee)}
+            ${li('Pull out staff', data.nursingManpower.pullOut)}
+            ${li('RC ICU Staff', data.nursingManpower.rcICU)}
+            ${li('Float to ICU staff', data.nursingManpower.floatToICU)}
+            ${li('On Call', data.nursingManpower.onCall)}
+            ${li('Total', data.nursingManpower.total)}
+          </table>
+          <h3 style="margin:8px 0 0">Census</h3>
+          <table style="border-collapse:collapse;width:100%;background:#fafafa;border:1px solid #e5e7eb;border-radius:10px;overflow:hidden">
+            ${li('Active', data.census.active)}
+            ${li('Admission', data.census.admission)}
+            ${li('Discharge', data.census.discharge)}
+            ${li('Transfer out', data.census.transferOut)}
+            ${li('DAMA', data.census.dama)}
+            ${li('Death', data.census.death)}
+            ${li('Code Blue', data.census.codeBlue)}
+            ${li('CRRT', data.census.crrt)}
+            ${li('Hemodialysis', data.census.hemodialysis)}
+          </table>
+          ${data.notes ? `<div><h3 style=\"margin:8px 0 4px\">Notes</h3><div style=\"background:#f3f4f6;padding:10px;border-radius:10px\">${data.notes.replace(/</g,'&lt;')}</div></div>`: ''}
+        </div>`;
+    }
+  </script>
+</body>
+</html>
